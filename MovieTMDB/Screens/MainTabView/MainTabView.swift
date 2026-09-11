@@ -8,14 +8,26 @@
 import SwiftUI
 
 struct MainTabView: View {
-    
-   @State private var homeViewModel = HomeViewModel()
+    @Environment(GenreStore.self) private var genreStore
+    @State private var homeViewModel = HomeViewModel()
+    @State private var searchViewModel = SearchViewModel()
+    @State private var selectedTab = 0
+    @State private var path = NavigationPath()
     
     var body: some View {
-        TabView {
-            Tab {
-                NavigationStack {
-                    HomeView(viewModel: homeViewModel)
+        TabView(selection: $selectedTab) {
+            Tab(value: 0) {
+                NavigationStack(path: $path) {
+                    HomeView(viewModel: homeViewModel,path: $path, selectedTab: $selectedTab)
+                        .navigationDestination(for: Route.self) { route in
+                            switch route {
+                            case .category(let category):
+                                SeeAllView(category: category)
+                            case .detail(let movie):
+                                MovieDetailView(movie: movie)
+                                    .navigationTitle(movie.title)
+                            }
+                        }
                 }
             }label: {
                 Image(.home)
@@ -23,24 +35,33 @@ struct MainTabView: View {
                 Text("Home")
             }
             
-            Tab {
+            Tab(value: 1) {
                 NavigationStack {
-                    
+                    SearchView(viewModel: searchViewModel)
+                        .navigationDestination(for: Route.self) { route in
+                            switch route {
+                            case .category(let category):
+                                SeeAllView(category: category)
+                            case .detail(let movie):
+                                MovieDetailView(movie: movie)
+                                    .navigationTitle(movie.title)
+                            }
+                        }
                 }
             }label: {
                 Image(.search)
                     .renderingMode(.template)
-                Text("Home")
+                Text("Search")
             }
             
-            Tab {
+            Tab (value: 2){
                 NavigationStack {
-                    
+                    WatchListView()
                 }
             }label: {
                 Image(.save)
                     .renderingMode(.template)
-                Text("Home")
+                Text("Watch list")
             }
         }
         .tint(.icon)

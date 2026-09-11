@@ -16,7 +16,7 @@ struct SplashScreenView: View {
            Image(.popcorn)
            
                .task {
-                   try? await Task.sleep(for: .seconds(2))
+                   try? await Task.sleep(for: .seconds(3))
                    isFinished = true
                }
        }
