@@ -5,28 +5,63 @@
 //  Created by Cicek on 02.09.26.
 //
 import Foundation
+import Observation
 
+@MainActor
 @Observable
 final class HomeViewModel {
+   private(set) var popularMovies: [Movie] = []
+    private(set) var topRatedMovies: [Movie] = []
+    private(set) var upcomingMovies: [Movie] = []
+    private(set) var nowPlayingMovies: [Movie] = []
     
-    private let networkService: NetworkService
+    var state: MovieViewState = .idle
     
-    init(networkService: NetworkService = DefaultNetworkService()) {
+    private let networkService: MovieNetworkService
+    
+    init(networkService: MovieNetworkService = DefaultMovieService()) {
         self.networkService = networkService
     }
     
-    var movies: [Movie] = []
-    
-    
-    func fetchMovie() async {
+    func fetchMovies(page: Int) async {
+        state = .loading
         do {
-            let decoderMovie: [Movie] = try await networkService.request(MovieEndPoint.popular(page: 1))
-            movies = decoderMovie
-        } catch is CancellationError {
+            async let nowPlaying: () = loadNowPlayingMovies(page: page)
+            async let popular: () = loadPopularMovies(page: page)
+            async let upcoming: () = loadUpcomingMovies(page: page)
+            async let topRated: () = loadTopRatedMovies(page: page)
+            
+            _ = try await (nowPlaying, popular, upcoming, topRated)
+            
+            state = popularMovies.isEmpty && topRatedMovies.isEmpty && upcomingMovies.isEmpty && nowPlayingMovies.isEmpty ? .empty : .loaded
+        }catch is CancellationError {
             return
-        }catch {
-            //error.localizedDescription
+        }catch  {
+            state = .error(error.localizedDescription)
         }
     }
     
+    func loadPopularMovies(page: Int) async throws {
+        let response = try await networkService.fetchMovies(endPoint: .popular(page: page))
+        popularMovies = response.results
+        
+    }
+    
+    func loadTopRatedMovies(page: Int) async throws {
+        let response = try await networkService.fetchMovies(endPoint: .topRated(page: page))
+        topRatedMovies = response.results
+        
+        
+    }
+    
+    func loadUpcomingMovies(page: Int) async throws {
+        let response = try await networkService.fetchMovies(endPoint: .upcoming(page: page))
+        upcomingMovies = response.results
+        
+    }
+    
+    func loadNowPlayingMovies(page: Int) async throws {
+        let response = try await networkService.fetchMovies(endPoint: .nowPlaying(page: page))
+        nowPlayingMovies = response.results
+    }
 }
