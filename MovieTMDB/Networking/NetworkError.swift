@@ -13,6 +13,7 @@ enum NetworkError: LocalizedError {
     case decodingError
     case encodingError
     case unknown(Error)
+    case unauthorized
     
     
     var errorDescription: String? {
@@ -29,6 +30,8 @@ enum NetworkError: LocalizedError {
             return "Encoding xetasi"
         case .unknown(let error):
             return error.localizedDescription
+        case .unauthorized:
+            return "Authorization xətası baş verdi. API açarını yoxlayın."
         }
     }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class DefaultNetworkService: NetworkService {
+nonisolated final class DefaultNetworkService: NetworkService {
     private let session: URLSession
     
     init(session: URLSession = .shared) {
@@ -22,17 +22,22 @@ final class DefaultNetworkService: NetworkService {
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw NetworkError.invalidResponse
             }
-            guard (200...299).contains(httpResponse.statusCode) else {
+            
+            if (200...299).contains(httpResponse.statusCode) {
+                let decoder = JSONDecoder()
+                decoder.keyDecodingStrategy = .convertFromSnakeCase
+                let decoderdata = try decoder.decode(T.self, from: data)
+                return decoderdata
+            }else if httpResponse.statusCode == 401   {
+                throw NetworkError.unauthorized
+            } else {
                 throw NetworkError.serverError(statusCode: httpResponse.statusCode)
             }
-            let decoderdata = try JSONDecoder().decode(T.self, from: data)
-            return decoderdata
+            
         } catch let networkError as NetworkError {
             throw networkError
         }catch {
             throw NetworkError.unknown(error)
         }
     }
-    
-   
 }

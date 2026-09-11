@@ -10,7 +10,6 @@ protocol EndPoint {
     
     var path: String { get }
     var method: HttpMethod { get }
-    
     var queryItems: [URLQueryItem]? { get }
     var httpBody: Encodable? { get }
 }
@@ -43,7 +42,7 @@ extension EndPoint {
             throw NetworkError.invalidUrl
         }
         
-        components.path = path
+        components.path = components.path.appending(path)
         components.queryItems = queryItems
         
         guard let url = components.url else {
@@ -65,7 +64,7 @@ extension EndPoint {
                 throw NetworkError.encodingError
             }
         }
-        
+        print(request.url?.absoluteString ?? "nil")
         return request
     }
 }
